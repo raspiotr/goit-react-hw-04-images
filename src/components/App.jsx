@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
@@ -11,21 +11,28 @@ import Notiflix from 'notiflix';
 const BASE_URL = 'https://pixabay.com/api/';
 const API_KEY = '9318257-96b567a3bb5708a16f509a99b';
 
-export class App extends Component {
-  state = {
-    images: { total: 0, hits: [] },
-    query: '',
-    page: 1,
-    isLoading: false,
-    showModal: false,
-    selectedImage: '',
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [totalImages, setTotalImages] = useState(0);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  // state = {
+  //   images: { total: 0, hits: [] },
+  //   query: '',
+  //   page: 1,
+  //   isLoading: false,
+  //   showModal: false,
+  //   selectedImage: '',
+  // };
 
-  fetchImages = () => {
-    const { query, page } = this.state;
+  const fetchImages = () => {
+    // const { query, page } = this.state;
     const url = `${BASE_URL}?q=${query}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`;
 
-    this.setState({ isLoading: true });
+    setIsLoading(true);
 
     axios
       .get(url)
@@ -49,62 +56,63 @@ export class App extends Component {
           );
         }
 
-        this.setState(prevState => ({
-          images: {
-            total: response.data.totalHits,
-            hits: [...prevState.images.hits, ...response.data.hits],
-          },
-          page: prevState.page + 1,
-        }));
+        setImages(prevImages => prevImages.concat(response.data.hits));
+        setTotalImages(response.data.totalHits);
+        setPage(prevPage => prevPage + 1);
+        // this.setState(prevState => ({
+        //   images: {
+        //     total: response.data.totalHits,
+        //     hits: [...prevState.images.hits, ...response.data.hits],
+        //   },
+        //   page: prevState.page + 1,
+        // }));
       })
       .catch(error => {
         Notiflix.Notify.failure(
           'Ooops... Something went wrong! Please, try again.'
         );
       })
-      .finally(() => this.setState({ isLoading: false }));
+      .finally(() => setIsLoading(false));
   };
 
-  handleSearch = query => {
-    this.setState(
-      { query, page: 1, images: { total: 0, hits: [] } },
-      this.fetchImages
-    );
+  const handleSearch = myQuery => {
+    setQuery(myQuery);
+    setPage(1);
+    setImages([]);
+    setTotalImages(0);
+    // this.setState(
+    //   { query, page: 1, images: { total: 0, hits: [] } },);
+    fetchImages();
   };
 
-  handleLoadMore = () => {
-    this.fetchImages();
+  const handleLoadMore = () => {
+    fetchImages();
   };
 
-  handleClickImage = imageUrl => {
-    this.setState({ showModal: true, selectedImage: imageUrl });
+  const handleClickImage = imageUrl => {
+    setShowModal(true);
+    setSelectedImage(imageUrl);
+    // this.setState({ showModal: true, selectedImage: imageUrl });
   };
 
-  handleCloseModal = () => {
-    this.setState({ showModal: false, selectedImage: '' });
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedImage('');
+    // this.setState({ showModal: false, selectedImage: '' });
   };
 
-  render() {
-    const { images, showModal, selectedImage, isLoading, page } = this.state;
-    return (
-      <>
-        <Searchbar onSubmit={this.handleSearch} />
+  return (
+    <>
+      <Searchbar onSubmit={handleSearch} />
 
-        <ImageGallery
-          images={images.hits}
-          onImageClick={this.handleClickImage}
-        />
-        {images.total > (page - 1) * 12 && !isLoading && (
-          <Button onLoadMore={this.handleLoadMore} />
-        )}
-        {isLoading && <Loader />}
-        {showModal && (
-          <Modal
-            imageUrl={selectedImage}
-            onCloseModal={this.handleCloseModal}
-          />
-        )}
-      </>
-    );
-  }
-}
+      <ImageGallery images={images} onImageClick={handleClickImage} />
+      {totalImages > (page - 1) * 12 && !isLoading && (
+        <Button onLoadMore={handleLoadMore} />
+      )}
+      {isLoading && <Loader />}
+      {showModal && (
+        <Modal imageUrl={selectedImage} onCloseModal={handleCloseModal} />
+      )}
+    </>
+  );
+};

@@ -1,49 +1,44 @@
-import React, { Component, createRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import css from './ImageGallery.module.css';
 import PropTypes from 'prop-types';
 
-export class ImageGallery extends Component {
-  constructor(props) {
-    super(props);
-    this.lastNewImageRef = createRef();
-  }
+export const ImageGallery = props => {
+  const { images, onImageClick } = props;
+  const lastNewImageRef = useRef();
+  const prevImages = useRef(images);
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.images !== this.props.images) {
-      this.scrollToLastNewImage();
+  useEffect(() => {
+    const scrollToLastNewImage = () => {
+      if (lastNewImageRef.current) {
+        lastNewImageRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end',
+        });
+      }
+    };
+
+    if (prevImages.current !== images) {
+      scrollToLastNewImage();
     }
-  }
 
-  scrollToLastNewImage = () => {
-    if (this.lastNewImageRef.current) {
-      this.lastNewImageRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
-      });
-    }
-  };
+    prevImages.current = images;
+  }, [images]);
 
-  render() {
-    const { images, onImageClick } = this.props;
-
-    return (
-      <ul className={css.ImageGallery}>
-        {images.map((image, index) => (
-          <ImageGalleryItem
-            key={image.id}
-            imageUrl={image.webformatURL}
-            imageTags={image.tags}
-            onImageClick={() => onImageClick(image.largeImageURL)}
-            forwardRef={
-              index === images.length - 1 ? this.lastNewImageRef : null
-            }
-          />
-        ))}
-      </ul>
-    );
-  }
-}
+  return (
+    <ul className={css.ImageGallery}>
+      {images.map((image, index) => (
+        <ImageGalleryItem
+          key={image.id}
+          imageUrl={image.webformatURL}
+          imageTags={image.tags}
+          onImageClick={() => onImageClick(image.largeImageURL)}
+          forwardRef={index === images.length - 1 ? lastNewImageRef : null}
+        />
+      ))}
+    </ul>
+  );
+};
 
 ImageGallery.propTypes = {
   images: PropTypes.array.isRequired,

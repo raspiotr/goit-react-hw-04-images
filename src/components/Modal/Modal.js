@@ -1,39 +1,37 @@
-import React, { Component } from 'react';
+import { useEffect } from 'react';
 import css from './Modal.module.css';
 import PropTypes from 'prop-types';
 
-export class Modal extends Component {
-  handleModalBackgroundClick = event => {
+export const Modal = props => {
+  const { imageUrl, onCloseModal } = props;
+
+  const handleModalBackgroundClick = event => {
     if (event.target.classList.contains('Overlay')) {
-      this.props.onCloseModal();
+      onCloseModal();
     }
   };
 
-  handleEscapeClick = event => {
-    if (event.key === 'Escape') {
-      this.props.onCloseModal();
-    }
-  };
+  useEffect(() => {
+    const handleEscapeClick = event => {
+      if (event.key === 'Escape') {
+        onCloseModal();
+      }
+    };
+    document.addEventListener('keydown', handleEscapeClick);
 
-  componentDidMount() {
-    document.addEventListener('keydown', this.handleEscapeClick);
-  }
+    return () => {
+      document.removeEventListener('keydown', handleEscapeClick);
+    };
+  }, [onCloseModal]);
 
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.handleEscapeClick);
-  }
-
-  render() {
-    const { imageUrl } = this.props;
-    return (
-      <div className="Overlay" onClick={this.handleModalBackgroundClick}>
-        <div className={css.Modal}>
-          <img src={imageUrl} alt="Bigger size" />
-        </div>
+  return (
+    <div className="Overlay" onClick={handleModalBackgroundClick}>
+      <div className={css.Modal}>
+        <img src={imageUrl} alt="Bigger size" />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 Modal.propTypes = {
   onCloseModal: PropTypes.func.isRequired,
